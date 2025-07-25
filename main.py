@@ -31,7 +31,14 @@ from delete_exam import delete_exam
 
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/*": {  # Обратите внимание на "/*" вместо "/api/*"
+        "origins": ["http://localhost:3000"],  # Только ваш фронтенд
+        "methods": ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
 @app.route("/")
 def hello_world():
     return jsonify({"answer": "poshel nahooy"})
