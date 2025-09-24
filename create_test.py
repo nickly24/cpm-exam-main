@@ -1,47 +1,92 @@
-import mysql.connector
-from db import db
+from pymongo import MongoClient
+from datetime import datetime
+from bson import ObjectId
 
-def create_test_with_questions_and_answers(test_data):
+client = MongoClient('mongodb://gen_user:77tanufe@109.73.202.73:27017/default_db?authSource=admin&directConnection=true')
+
+def create_test(test_data):
+    db = client.default_db
+    tests_collection = db.tests
+    
+    test_data["createdAt"] = datetime.utcnow().isoformat() + "Z"
+    
+    result = tests_collection.insert_one(test_data)
+    
+    return str(result.inserted_id)
+
+def update_test(test_id, test_data):
+    """
+    Обновляет существующий тест
+    
+    Args:
+        test_id (str): ID теста для обновления
+        test_data (dict): Новые данные теста
+    
+    Returns:
+        bool: True если тест обновлен, False если не найден
+    """
+    db = client.default_db
+    tests_collection = db.tests
+    
+    # Добавляем время обновления
+    test_data["updatedAt"] = datetime.utcnow().isoformat() + "Z"
+    
+    result = tests_collection.update_one(
+        {"_id": ObjectId(test_id)},
+        {"$set": test_data}
+    )
+    
+    return result.modified_count > 0
+
+def delete_test(test_id):
+    """
+    Удаляет тест и все связанные с ним тест-сессии
+    
+    Args:
+        test_id (str): ID теста для удаления
+    
+    Returns:
+        dict: Результат удаления с количеством удаленных записей
+    """
+    db = client.default_db
+    tests_collection = db.tests
+    test_sessions_collection = db.test_sessions
+    
+    # Сначала удаляем все тест-сессии этого теста
+    sessions_result = test_sessions_collection.delete_many({"testId": test_id})
+    sessions_deleted = sessions_result.deleted_count
+    
+    # Затем удаляем сам тест
+    test_result = tests_collection.delete_one({"_id": ObjectId(test_id)})
+    test_deleted = test_result.deleted_count
+    
+    return {
+        "test_deleted": test_deleted > 0,
+        "sessions_deleted": sessions_deleted,
+        "total_deleted": test_deleted + sessions_deleted
+    }
+
+def get_test_by_id(test_id):
+    """
+    Получает тест по ID
+    
+    Args:
+        test_id (str): ID теста
+    
+    Returns:
+        dict: Данные теста или None
+    """
     try:
-        conn = mysql.connector.connect(
-            host=db.host,
-            port=db.port,
-            user=db.user,
-            password=db.password,
-            database=db.db
-        )
-        cursor = conn.cursor()
-
-        # 1. Добавляем тест в таблицу tests
-        cursor.execute("""
-            INSERT INTO tests (name, branch_id, date)
-            VALUES (%s, %s, %s)
-        """, (test_data['name'], test_data['branch_id'], test_data['date']))
-        test_id = cursor.lastrowid
-
-        # 2. Добавляем вопросы в таблицу test_questions
-        for question in test_data['questions']:
-            cursor.execute("""
-                INSERT INTO test_questions (question, type, test_id)
-                VALUES (%s, %s, %s)
-            """, (question['question_text'], question['type'], test_id))
-            question_id = cursor.lastrowid
-
-            # 3. Добавляем ответы в таблицу answers
-            correct_answers = question['correct_answers']
-            for answer_text in question['answers']:
-                status = 1 if answer_text in correct_answers else 0
-                cursor.execute("""
-                    INSERT INTO answers (answer, status, questions_id)
-                    VALUES (%s, %s, %s)
-                """, (answer_text, status, question_id))
-
-        conn.commit()
-        return {"message": "Test created successfully", "test_id": test_id}
-
-    except mysql.connector.Error as err:
-        return {"error": str(err)}
-
-    finally:
-        cursor.close()
-        conn.close()
+        db = client.default_db
+        tests_collection = db.tests
+        
+        test = tests_collection.find_one({"_id": ObjectId(test_id)})
+        
+        if test:
+            test["_id"] = str(test["_id"])
+            return test
+        
+        return None
+    except Exception:
+        # Если ObjectId невалидный, возвращаем None
+        return None
