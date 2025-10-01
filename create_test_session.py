@@ -219,20 +219,29 @@ def _score_single(selected_answer_id: str, question: dict) -> tuple[int, bool]:
 
 def _score_multiple(selected_answer_ids: list, question: dict) -> tuple[int, bool]:
     total_available = int(question.get("points", 0))
-    gained = 0
     answers_index = {a.get("id"): a for a in question.get("answers", [])}
-    for ans_id in selected_answer_ids or []:
+    selected_set = set(selected_answer_ids or [])
+    
+    # СТРОГАЯ ПРОВЕРКА: если выбрал хотя бы один неверный ответ - сразу 0 баллов
+    for ans_id in selected_set:
         spec = answers_index.get(ans_id)
-        if not spec:
-            continue
-        if spec.get("isCorrect"):
+        if not spec or not spec.get("isCorrect"):
+            return 0, False
+    
+    # Если все выбранные ответы правильные, считаем баллы
+    gained = 0
+    for ans_id in selected_set:
+        spec = answers_index.get(ans_id)
+        if spec and spec.get("isCorrect"):
             gained += int(spec.get("pointValue", 0))
+    
     # Ограничиваем максимальными баллами за вопрос
     gained = min(gained, total_available)
-    # Корректность: все выбранные должны быть правильными и не пропущены правильные с ненулевым весом
+    
+    # Проверяем, что выбраны все правильные ответы (не пропущены важные)
     correct_ids = {a.get("id") for a in question.get("answers", []) if a.get("isCorrect") and int(a.get("pointValue", 0)) > 0}
-    selected_set = set(selected_answer_ids or [])
-    is_correct = (gained == total_available) and (selected_set.issubset(correct_ids))
+    is_correct = (gained == total_available) and (selected_set.issuperset(correct_ids))
+    
     return int(gained), bool(is_correct)
 
 def _score_text(text_answer: str, question: dict) -> tuple[int, bool]:
@@ -313,16 +322,13 @@ def recalc_test_sessions(test_id: str) -> dict:
 
         new_answers: list[dict] = []
 
-        # 1) Пройтись по ответам: если вопрос удален — обнулить; если есть в тесте — пересчитать
+        # 1) Пройтись по ответам: если вопрос удален — убираем из сессии; если есть в тесте — пересчитываем
         for a in answers:
             qid = a.get("questionId")
             q_spec = question_by_id.get(qid)
             if not q_spec:
-                # Вопрос удален — 0 баллов
-                updated_answer = dict(a)
-                updated_answer["points"] = 0
-                updated_answer["isCorrect"] = False
-                new_answers.append(updated_answer)
+                # Вопрос удален — полностью убираем из сессии
+                continue
             else:
                 # Пересчитываем по новой спецификации
                 new_answers.append(_recompute_answer(a, q_spec))
@@ -333,8 +339,15 @@ def recalc_test_sessions(test_id: str) -> dict:
             if qid not in answer_by_qid:
                 new_answers.append(_placeholder_answer_for_new_question(q))
 
-        # 3) Пересчитать общий счет
-        new_score = sum(int(a.get("points", 0)) for a in new_answers)
+        # 3) Пересчитать рейтинговый балл
+        earned_points = sum(int(a.get("points", 0)) for a in new_answers)
+        max_points = sum(int(q.get("points", 0)) for q in questions)
+        
+        # Рейтинговый балл = (набранные баллы / максимальные баллы) × 100
+        if max_points > 0:
+            new_score = round((earned_points / max_points) * 100, 2)
+        else:
+            new_score = 0
 
         update_doc = {
             "answers": new_answers,
