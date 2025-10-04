@@ -18,9 +18,7 @@ CORS(app, resources={
         "supports_credentials": True
     }
 })
-@app.route("/")
-def hello_world():
-    return jsonify({"answer": "poshel nahooy"})
+
 
 @app.route("/directions")
 def get_directions_route():

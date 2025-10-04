@@ -1,0 +1,198 @@
+[
+  {
+    "test_type": "single_load",
+    "result": {
+      "concurrent_requests": 10,
+      "test_duration_seconds": 10,
+      "total_requests": 96,
+      "successful_requests": 0,
+      "failed_requests": 96,
+      "success_rate_percent": 0.0,
+      "requests_per_second": 9.6,
+      "error_summary": {
+        "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.28.0</center>\r\n</body>\r\n</html>\r\n": 96
+      }
+    }
+  },
+  {
+    "test_type": "gradual_load",
+    "results": [
+      {
+        "concurrent_requests": 1,
+        "test_duration_seconds": 5,
+        "total_requests": 48,
+        "successful_requests": 0,
+        "failed_requests": 48,
+        "success_rate_percent": 0.0,
+        "requests_per_second": 9.6,
+        "error_summary": {
+          "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.28.0</center>\r\n</body>\r\n</html>\r\n": 48
+        }
+      },
+      {
+        "concurrent_requests": 6,
+        "test_duration_seconds": 5,
+        "total_requests": 48,
+        "successful_requests": 0,
+        "failed_requests": 48,
+        "success_rate_percent": 0.0,
+        "requests_per_second": 9.6,
+        "error_summary": {
+          "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.28.0</center>\r\n</body>\r\n</html>\r\n": 48
+        }
+      },
+      {
+        "concurrent_requests": 11,
+        "test_duration_seconds": 5,
+        "total_requests": 48,
+        "successful_requests": 0,
+        "failed_requests": 48,
+        "success_rate_percent": 0.0,
+        "requests_per_second": 9.6,
+        "error_summary": {
+          "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.28.0</center>\r\n</body>\r\n</html>\r\n": 48
+        }
+      },
+      {
+        "concurrent_requests": 16,
+        "test_duration_seconds": 5,
+        "total_requests": 48,
+        "successful_requests": 0,
+        "failed_requests": 48,
+        "success_rate_percent": 0.0,
+        "requests_per_second": 9.6,
+        "error_summary": {
+          "Timeout (30s)": 32,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072a18d0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /directions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072a0580>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/informatika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072a2ad0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/matematika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x11c84bac0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f6590>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /directions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f4fa0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/informatika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x11c81f910>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x11c84ae00>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/matematika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x11c81e890>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /directions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x11c84a560>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x11c81dd80>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/informatika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f72e0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /directions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x11c81d300>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/matematika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f67a0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/informatika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x11c81c790>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/matematika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x107253e50>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1
+        }
+      },
+      {
+        "concurrent_requests": 21,
+        "test_duration_seconds": 5,
+        "total_requests": 52,
+        "successful_requests": 0,
+        "failed_requests": 52,
+        "success_rate_percent": 0.0,
+        "requests_per_second": 10.4,
+        "error_summary": {
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f43d0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /directions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f4280>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.28.0</center>\r\n</body>\r\n</html>\r\n": 27,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/matematika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f5030>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /directions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f5690>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f6170>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/matematika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f5c60>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f7dc0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f4460>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/informatika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f7ca0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/matematika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f5000>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /directions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f6e00>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/informatika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f7d00>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/informatika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f71f0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/matematika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f6320>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /directions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f5ff0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/informatika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f75e0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/informatika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f6dd0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/matematika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f4700>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /directions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f5f00>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/informatika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f5180>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f7820>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f6860>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /tests/matematika (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f4cd0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: /directions (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x1072f62f0>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1,
+          "HTTPSConnectionPool(host='nickly24-cpm-exam-main-225a.twc1.net', port=443): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x11c848370>: Failed to establish a new connection: [Errno 61] Connection refused'))": 1
+        }
+      },
+      {
+        "concurrent_requests": 26,
+        "test_duration_seconds": 5,
+        "total_requests": 48,
+        "successful_requests": 0,
+        "failed_requests": 48,
+        "success_rate_percent": 0.0,
+        "requests_per_second": 9.6,
+        "error_summary": {
+          "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.28.0</center>\r\n</body>\r\n</html>\r\n": 48
+        }
+      },
+      {
+        "concurrent_requests": 31,
+        "test_duration_seconds": 5,
+        "total_requests": 52,
+        "successful_requests": 0,
+        "failed_requests": 52,
+        "success_rate_percent": 0.0,
+        "requests_per_second": 10.4,
+        "error_summary": {
+          "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.28.0</center>\r\n</body>\r\n</html>\r\n": 52
+        }
+      },
+      {
+        "concurrent_requests": 36,
+        "test_duration_seconds": 5,
+        "total_requests": 48,
+        "successful_requests": 0,
+        "failed_requests": 48,
+        "success_rate_percent": 0.0,
+        "requests_per_second": 9.6,
+        "error_summary": {
+          "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.28.0</center>\r\n</body>\r\n</html>\r\n": 48
+        }
+      },
+      {
+        "concurrent_requests": 41,
+        "test_duration_seconds": 5,
+        "total_requests": 48,
+        "successful_requests": 0,
+        "failed_requests": 48,
+        "success_rate_percent": 0.0,
+        "requests_per_second": 9.6,
+        "error_summary": {
+          "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.28.0</center>\r\n</body>\r\n</html>\r\n": 48
+        }
+      },
+      {
+        "concurrent_requests": 46,
+        "test_duration_seconds": 5,
+        "total_requests": 48,
+        "successful_requests": 0,
+        "failed_requests": 48,
+        "success_rate_percent": 0.0,
+        "requests_per_second": 9.6,
+        "error_summary": {
+          "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.28.0</center>\r\n</body>\r\n</html>\r\n": 48
+        }
+      }
+    ]
+  },
+  {
+    "test_type": "burst_load",
+    "result": {
+      "concurrent_requests": 100,
+      "test_duration_seconds": 5,
+      "total_requests": 100,
+      "successful_requests": 0,
+      "failed_requests": 100,
+      "success_rate_percent": 0.0,
+      "requests_per_second": 20.0,
+      "error_summary": {
+        "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.28.0</center>\r\n</body>\r\n</html>\r\n": 100
+      }
+    }
+  }
+]
