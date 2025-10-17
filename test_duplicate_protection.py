@@ -8,7 +8,7 @@ import json
 import time
 
 # URL API
-API_URL = "http://localhost:81"
+API_URL = "https://nickly24-cpm-exam-main-225a.twc1.net/"
 
 def test_duplicate_protection():
     """Тестирует защиту от дублирования тест-сессий"""
