@@ -93,7 +93,7 @@ def create_test_session_route():
         if field not in session_data:
             return jsonify({"error": f"Missing required field: {field}"}), 400
     
-    session_id = create_test_session(
+    result = create_test_session(
         student_id=session_data["studentId"],
         test_id=session_data["testId"],
         test_title=session_data["testTitle"],
@@ -102,7 +102,18 @@ def create_test_session_route():
         time_spent_minutes=session_data.get("timeSpentMinutes")
     )
     
-    return jsonify({"id": session_id})
+    # Если тест уже сдан, возвращаем ошибку
+    if not result["success"]:
+        return jsonify({
+            "error": result["error"],
+            "message": result["message"],
+            "existingSessionId": result.get("existingSessionId"),
+            "existingScore": result.get("existingScore"),
+            "completedAt": result.get("completedAt")
+        }), 409  # Conflict status code
+    
+    # Если успешно создана, возвращаем ID сессии
+    return jsonify({"id": result["sessionId"]})
 
 @app.route("/test-session/<session_id>")
 def get_test_session_route(session_id):

@@ -1,7 +1,28 @@
 from pymongo import MongoClient
 from datetime import datetime
+from pymongo.errors import DuplicateKeyError
 
 client = MongoClient('mongodb://gen_user:77tanufe@109.73.202.73:27017/default_db?authSource=admin&directConnection=true')
+
+# Создаем уникальный индекс для предотвращения дублирования тест-сессий
+def ensure_unique_index():
+    """Создает уникальный индекс для предотвращения дублирования тест-сессий"""
+    db = client.default_db
+    test_sessions_collection = db.test_sessions
+    
+    try:
+        # Создаем уникальный составной индекс по studentId и testId
+        test_sessions_collection.create_index(
+            [("studentId", 1), ("testId", 1)],
+            unique=True,
+            name="unique_student_test"
+        )
+        print("Уникальный индекс создан успешно")
+    except Exception as e:
+        print(f"Ошибка при создании индекса: {e}")
+
+# Вызываем создание индекса при импорте модуля
+ensure_unique_index()
 
 def create_test_session(student_id, test_id, test_title, answers, score=None, time_spent_minutes=None):
     """
@@ -16,10 +37,26 @@ def create_test_session(student_id, test_id, test_title, answers, score=None, ti
         time_spent_minutes (int, optional): Время прохождения в минутах
     
     Returns:
-        str: ID созданной тест-сессии
+        dict: Результат создания сессии с информацией о дублировании
     """
     db = client.default_db
     test_sessions_collection = db.test_sessions
+    
+    # Проверяем, не существует ли уже тест-сессия для этого студента и теста
+    existing_session = test_sessions_collection.find_one({
+        "studentId": student_id,
+        "testId": test_id
+    })
+    
+    if existing_session:
+        return {
+            "success": False,
+            "error": "Тест уже сдан",
+            "message": "Для данного студента и теста уже существует завершенная сессия",
+            "existingSessionId": str(existing_session["_id"]),
+            "existingScore": existing_session.get("score"),
+            "completedAt": existing_session.get("completedAt")
+        }
     
     # Автоматически вычисляем общий балл, если не указан
     if score is None:
@@ -37,10 +74,31 @@ def create_test_session(student_id, test_id, test_title, answers, score=None, ti
         "createdAt": datetime.utcnow().isoformat() + "Z"
     }
     
-    # Вставляем в базу данных
-    result = test_sessions_collection.insert_one(test_session)
-    
-    return str(result.inserted_id)
+    # Вставляем в базу данных с дополнительной защитой от дублирования
+    try:
+        result = test_sessions_collection.insert_one(test_session)
+        
+        return {
+            "success": True,
+            "sessionId": str(result.inserted_id),
+            "message": "Тест-сессия успешно создана"
+        }
+    except DuplicateKeyError:
+        # Если все же произошло дублирование на уровне БД (редкий случай)
+        # Ищем существующую сессию и возвращаем информацию о ней
+        existing_session = test_sessions_collection.find_one({
+            "studentId": student_id,
+            "testId": test_id
+        })
+        
+        return {
+            "success": False,
+            "error": "Тест уже сдан",
+            "message": "Обнаружено дублирование на уровне базы данных",
+            "existingSessionId": str(existing_session["_id"]) if existing_session else None,
+            "existingScore": existing_session.get("score") if existing_session else None,
+            "completedAt": existing_session.get("completedAt") if existing_session else None
+        }
 
 def get_test_session_by_id(session_id):
     """
