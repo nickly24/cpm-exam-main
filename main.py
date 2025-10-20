@@ -4,7 +4,8 @@ from flask_cors import CORS
 from get_directions import get_directions
 from get_tests_by_direction import get_tests_by_direction
 from create_test import create_test, update_test, delete_test, get_test_by_id
-from create_test_session import create_test_session, get_test_session_by_id, get_test_sessions_by_student, get_test_sessions_by_test, get_test_session_stats, get_test_session_by_student_and_test, recalc_test_sessions 
+from create_test_session import create_test_session, get_test_session_by_id, get_test_sessions_by_student, get_test_sessions_by_test, get_test_session_stats, get_test_session_by_student_and_test, recalc_test_sessions
+from get_student_attendance import get_student_attendance 
 
 
 
@@ -146,6 +147,26 @@ def get_test_session_by_student_and_test_route(student_id, test_id):
         return jsonify(session)
     return jsonify({"error": "Test session not found"}), 404
 
+
+@app.route("/get-attendance", methods=["POST"])
+def get_attendance_route():
+    """
+    Получает посещаемость студента за определенный месяц
+    Ожидает JSON: {"student_id": "123", "year_month": "2025-01"}
+    """
+    try:
+        data = request.get_json()
+        student_id = data.get('student_id')
+        year_month = data.get('year_month')
+        
+        if not student_id or not year_month:
+            return jsonify({"status": False, "error": "Отсутствуют обязательные поля: student_id, year_month"}), 400
+        
+        result = get_student_attendance(student_id, year_month)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"status": False, "error": str(e)}), 500
 
 
 if __name__ =="__main__":
