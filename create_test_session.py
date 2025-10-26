@@ -276,33 +276,41 @@ def _score_single(selected_answer_id: str, question: dict) -> tuple[int, bool]:
     return points, is_correct
 
 def _score_multiple(selected_answer_ids: list, question: dict) -> tuple[int, bool]:
+    """
+    Правильная логика для множественного выбора:
+    - Должны быть выбраны ВСЕ правильные ответы
+    - Не должно быть выбрано НИ ОДНОГО неправильного ответа
+    - Иначе - 0 баллов
+    """
     total_available = int(question.get("points", 0))
     answers_index = {a.get("id"): a for a in question.get("answers", [])}
     selected_set = set(selected_answer_ids or [])
     
-    # СТРОГАЯ ПРОВЕРКА: если выбрал хотя бы один неверный ответ - сразу 0 баллов
-    for ans_id in selected_set:
-        spec = answers_index.get(ans_id)
-        if not spec or not spec.get("isCorrect"):
-            return 0, False
+    # Получаем все правильные ответы (только те, где isCorrect = true)
+    all_correct_ids = {a.get("id") for a in question.get("answers", []) if a.get("isCorrect")}
     
-    # Если все выбранные ответы правильные, считаем баллы
-    gained = 0
-    for ans_id in selected_set:
-        spec = answers_index.get(ans_id)
-        if spec and spec.get("isCorrect"):
-            gained += int(spec.get("pointValue", 0))
+    # Получаем все неправильные ответы
+    all_incorrect_ids = {a.get("id") for a in question.get("answers", []) if not a.get("isCorrect")}
     
-    # Ограничиваем максимальными баллами за вопрос
-    gained = min(gained, total_available)
+    # Проверка 1: Выбраны ВСЕ правильные ответы
+    all_correct_selected = selected_set.issuperset(all_correct_ids)
     
-    # Проверяем, что выбраны все правильные ответы (не пропущены важные)
-    correct_ids = {a.get("id") for a in question.get("answers", []) if a.get("isCorrect") and int(a.get("pointValue", 0)) > 0}
-    is_correct = (gained == total_available) and (selected_set.issuperset(correct_ids))
+    # Проверка 2: НЕ выбрано НИ ОДНОГО неправильного ответа
+    no_incorrect_selected = selected_set.isdisjoint(all_incorrect_ids)
     
-    return int(gained), bool(is_correct)
+    # Если обе проверки пройдены - даем полные баллы
+    if all_correct_selected and no_incorrect_selected:
+        return total_available, True
+    else:
+        # Иначе - 0 баллов
+        return 0, False
 
 def _score_text(text_answer: str, question: dict) -> tuple[int, bool]:
+    """
+    Правильная логика для текстового ответа:
+    - Буква в букву (с учетом нормализации)
+    - Совпадение с одним из правильных ответов
+    """
     normalized = _normalize_text(text_answer)
     correct_list = [
         _normalize_text(val) for val in (question.get("correctAnswers") or [])
