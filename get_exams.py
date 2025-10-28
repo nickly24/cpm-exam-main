@@ -63,7 +63,7 @@ def get_exam_session(student_id, exam_id):
         
         # Получаем сессию студента на этот экзамен
         cursor.execute("""
-            SELECT id, val as points, points as grade, examinator 
+            SELECT id, val, points, examinator 
             FROM exam_sessions 
             WHERE exam_id = %s AND student_id = %s
         """, (exam_id, student_id))
@@ -82,8 +82,8 @@ def get_exam_session(student_id, exam_id):
         return {
             "status": True,
             "exam": exam,
-            "grade": session["grade"],  # points -> grade
-            "score": session["points"], # val -> points
+            "grade": session["points"],  # points -> оценка (0-5)
+            "score": session["val"],      # val -> баллы (0-6)
             "examinator": session["examinator"]
         }
         
@@ -112,8 +112,8 @@ def get_exam_sessions_by_student(student_id):
         query = """
             SELECT 
                 es.id,
-                es.val as points,
-                es.points as grade,
+                es.val,
+                es.points,
                 es.examinator,
                 e.id as exam_id,
                 e.name as exam_name,
@@ -125,7 +125,20 @@ def get_exam_sessions_by_student(student_id):
         """
         
         cursor.execute(query, (student_id,))
-        sessions = cursor.fetchall()
+        raw_sessions = cursor.fetchall()
+        
+        # Преобразуем данные: val -> points (баллы 0-6), points -> grade (оценка 0-5)
+        sessions = []
+        for s in raw_sessions:
+            sessions.append({
+                "id": s["id"],
+                "points": s["val"],  # val это баллы
+                "grade": s["points"],  # points это оценка
+                "examinator": s["examinator"],
+                "exam_id": s["exam_id"],
+                "exam_name": s["exam_name"],
+                "exam_date": s["exam_date"]
+            })
         
         cursor.close()
         connection.close()
@@ -160,8 +173,8 @@ def get_all_exam_sessions():
         query = """
             SELECT 
                 es.id,
-                es.val as points,
-                es.points as grade,
+                es.val,
+                es.points,
                 es.examinator,
                 es.student_id,
                 e.id as exam_id,
@@ -175,7 +188,22 @@ def get_all_exam_sessions():
         """
         
         cursor.execute(query)
-        sessions = cursor.fetchall()
+        raw_sessions = cursor.fetchall()
+        
+        # Преобразуем данные: val -> points (баллы 0-6), points -> grade (оценка 0-5)
+        sessions = []
+        for s in raw_sessions:
+            sessions.append({
+                "id": s["id"],
+                "points": s["val"],  # val это баллы
+                "grade": s["points"],  # points это оценка
+                "examinator": s["examinator"],
+                "student_id": s["student_id"],
+                "exam_id": s["exam_id"],
+                "exam_name": s["exam_name"],
+                "exam_date": s["exam_date"],
+                "student_name": s["student_name"]
+            })
         
         cursor.close()
         connection.close()
@@ -210,8 +238,8 @@ def get_exam_sessions_by_exam(exam_id):
         query = """
             SELECT 
                 es.id,
-                es.val as points,
-                es.points as grade,
+                es.val,
+                es.points,
                 es.examinator,
                 es.student_id,
                 e.id as exam_id,
@@ -226,7 +254,22 @@ def get_exam_sessions_by_exam(exam_id):
         """
         
         cursor.execute(query, (exam_id,))
-        sessions = cursor.fetchall()
+        raw_sessions = cursor.fetchall()
+        
+        # Преобразуем данные: val -> points (баллы 0-6), points -> grade (оценка 0-5)
+        sessions = []
+        for s in raw_sessions:
+            sessions.append({
+                "id": s["id"],
+                "points": s["val"],  # val это баллы
+                "grade": s["points"],  # points это оценка
+                "examinator": s["examinator"],
+                "student_id": s["student_id"],
+                "exam_id": s["exam_id"],
+                "exam_name": s["exam_name"],
+                "exam_date": s["exam_date"],
+                "student_name": s["student_name"]
+            })
         
         cursor.close()
         connection.close()
