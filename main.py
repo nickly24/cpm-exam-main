@@ -5,7 +5,8 @@ from get_directions import get_directions
 from get_tests_by_direction import get_tests_by_direction
 from create_test import create_test, update_test, delete_test, get_test_by_id
 from create_test_session import create_test_session, get_test_session_by_id, get_test_sessions_by_student, get_test_sessions_by_test, get_test_session_stats, get_test_session_by_student_and_test, recalc_test_sessions
-from get_student_attendance import get_student_attendance 
+from get_student_attendance import get_student_attendance
+from get_exams import get_all_exams, get_exam_session, get_exam_sessions_by_student, get_all_exam_sessions, get_exam_sessions_by_exam 
 
 
 
@@ -167,6 +168,53 @@ def get_attendance_route():
         
     except Exception as e:
         return jsonify({"status": False, "error": str(e)}), 500
+
+
+# ==================== EXAMS ROUTES ====================
+
+@app.route("/get-all-exams")
+def get_all_exams_route():
+    """Получает все экзамены"""
+    result = get_all_exams()
+    return jsonify(result)
+
+@app.route("/get-exam-session", methods=["POST"])
+def get_exam_session_route():
+    """Получает сессию экзамена для студента"""
+    try:
+        data = request.get_json()
+        student_id = data.get('student_id')
+        exam_id = data.get('exam_id')
+        
+        if not student_id or not exam_id:
+            return jsonify({
+                "status": False,
+                "error": "Отсутствуют обязательные поля: student_id, exam_id"
+            }), 400
+        
+        result = get_exam_session(student_id, exam_id)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"status": False, "error": str(e)}), 500
+
+@app.route("/get-student-exam-sessions/<student_id>")
+def get_student_exam_sessions_route(student_id):
+    """Получает все сессии экзаменов для студента"""
+    result = get_exam_sessions_by_student(student_id)
+    return jsonify(result)
+
+@app.route("/get-all-exam-sessions")
+def get_all_exam_sessions_route():
+    """Получает все сессии экзаменов (для администраторов)"""
+    result = get_all_exam_sessions()
+    return jsonify(result)
+
+@app.route("/get-exam-sessions/<exam_id>")
+def get_exam_sessions_by_exam_route(exam_id):
+    """Получает все сессии для конкретного экзамена"""
+    result = get_exam_sessions_by_exam(exam_id)
+    return jsonify(result)
 
 
 if __name__ =="__main__":
