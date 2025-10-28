@@ -63,7 +63,7 @@ def get_exam_session(student_id, exam_id):
         
         # Получаем сессию студента на этот экзамен
         cursor.execute("""
-            SELECT id, val as grade, points, examinator 
+            SELECT id, val as points, points as grade, examinator 
             FROM exam_sessions 
             WHERE exam_id = %s AND student_id = %s
         """, (exam_id, student_id))
@@ -82,8 +82,8 @@ def get_exam_session(student_id, exam_id):
         return {
             "status": True,
             "exam": exam,
-            "grade": session["grade"],
-            "score": session["points"],
+            "grade": session["grade"],  # points -> grade
+            "score": session["points"], # val -> points
             "examinator": session["examinator"]
         }
         
@@ -112,8 +112,8 @@ def get_exam_sessions_by_student(student_id):
         query = """
             SELECT 
                 es.id,
-                es.val as grade,
-                es.points,
+                es.val as points,
+                es.points as grade,
                 es.examinator,
                 e.id as exam_id,
                 e.name as exam_name,
@@ -160,8 +160,8 @@ def get_all_exam_sessions():
         query = """
             SELECT 
                 es.id,
-                es.val as grade,
-                es.points,
+                es.val as points,
+                es.points as grade,
                 es.examinator,
                 es.student_id,
                 e.id as exam_id,
@@ -210,8 +210,8 @@ def get_exam_sessions_by_exam(exam_id):
         query = """
             SELECT 
                 es.id,
-                es.val as grade,
-                es.points,
+                es.val as points,
+                es.points as grade,
                 es.examinator,
                 es.student_id,
                 e.id as exam_id,
