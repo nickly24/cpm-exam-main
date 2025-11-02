@@ -1,6 +1,7 @@
 from db import db
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from jwt_auth import require_auth, require_role, require_self_or_role
 from get_directions import get_directions
 from get_tests_by_direction import get_tests_by_direction
 from create_test import create_test, update_test, delete_test, get_test_by_id
@@ -14,10 +15,15 @@ from get_exams import get_all_exams, get_exam_session, get_exam_sessions_by_stud
 app = Flask(__name__)
 CORS(app, resources={
     r"/*": {  # Обратите внимание на "/*" вместо "/api/*"
-        "origins": ["https://cpm-lms.ru", "http://localhost:3000"],  # Только разрешенные домены
+        "origins": [
+            "https://cpm-lms.ru",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000"
+        ],  # Только разрешенные домены
         "methods": ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
         "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True
+        "supports_credentials": True,  # Важно для работы с cookies
+        "expose_headers": ["Content-Type"]
     }
 })
 
@@ -33,20 +39,23 @@ def get_tests_by_direction_route(direction):
     return jsonify(tests)
 
 @app.route("/test/<test_id>")
-def get_test_by_id_route(test_id):
+@require_auth
+def get_test_by_id_route(test_id, current_user=None):
     test = get_test_by_id(test_id)
     if test:
         return jsonify(test)
     return jsonify({"error": "Test not found"}), 404
 
 @app.route("/create-test", methods=["POST"])
-def create_test_route():
+@require_role('admin')
+def create_test_route(current_user=None):
     test_data = request.get_json()
     test_id = create_test(test_data)
     return jsonify({"id": test_id})
 
 @app.route("/test/<test_id>", methods=["PUT"])
-def update_test_route(test_id):
+@require_role('admin')
+def update_test_route(test_id, current_user=None):
     test_data = request.get_json()
     
     # Проверяем, существует ли тест
@@ -69,7 +78,8 @@ def update_test_route(test_id):
         return jsonify({"error": "Failed to update test"}), 500
 
 @app.route("/test/<test_id>", methods=["DELETE"])
-def delete_test_route(test_id):
+@require_role('admin')
+def delete_test_route(test_id, current_user=None):
     # Проверяем, существует ли тест
     existing_test = get_test_by_id(test_id)
     if not existing_test:
@@ -86,7 +96,8 @@ def delete_test_route(test_id):
     })
 
 @app.route("/create-test-session", methods=["POST"])
-def create_test_session_route():
+@require_self_or_role('studentId', 'admin')
+def create_test_session_route(current_user=None):
     session_data = request.get_json()
     
     # Проверяем обязательные поля
@@ -118,31 +129,57 @@ def create_test_session_route():
     return jsonify({"id": result["sessionId"]})
 
 @app.route("/test-session/<session_id>")
-def get_test_session_route(session_id):
+@require_auth
+def get_test_session_route(session_id, current_user=None):
+    # Нужно проверить, что сессия принадлежит пользователю или он админ
     session = get_test_session_by_id(session_id)
-    if session:
-        return jsonify(session)
-    return jsonify({"error": "Test session not found"}), 404
+    if not session:
+        return jsonify({"error": "Test session not found"}), 404
+    
+    # Проверяем доступ: либо это сессия студента, либо админ
+    if current_user.get('role') != 'admin' and str(session.get('studentId')) != str(current_user.get('id')):
+        return jsonify({
+            'status': False,
+            'error': 'Недостаточно прав доступа'
+        }), 403
+    
+    return jsonify(session)
 
 @app.route("/test-sessions/student/<student_id>")
-def get_test_sessions_by_student_route(student_id):
+@require_self_or_role('student_id', 'admin')
+def get_test_sessions_by_student_route(student_id, current_user=None):
     sessions = get_test_sessions_by_student(student_id)
     return jsonify(sessions)
 
 @app.route("/test-sessions/test/<test_id>")
-def get_test_sessions_by_test_route(test_id):
+@require_role('admin')
+def get_test_sessions_by_test_route(test_id, current_user=None):
     sessions = get_test_sessions_by_test(test_id)
     return jsonify(sessions)
 
 @app.route("/test-session/<session_id>/stats")
-def get_test_session_stats_route(session_id):
+@require_auth
+def get_test_session_stats_route(session_id, current_user=None):
+    # Проверяем доступ к сессии
+    session = get_test_session_by_id(session_id)
+    if not session:
+        return jsonify({"error": "Test session not found"}), 404
+    
+    # Проверяем доступ: либо это сессия студента, либо админ
+    if current_user.get('role') != 'admin' and str(session.get('studentId')) != str(current_user.get('id')):
+        return jsonify({
+            'status': False,
+            'error': 'Недостаточно прав доступа'
+        }), 403
+    
     stats = get_test_session_stats(session_id)
     if stats:
         return jsonify(stats)
     return jsonify({"error": "Test session not found"}), 404
 
 @app.route("/test-session/student/<student_id>/test/<test_id>")
-def get_test_session_by_student_and_test_route(student_id, test_id):
+@require_self_or_role('student_id', 'admin')
+def get_test_session_by_student_and_test_route(student_id, test_id, current_user=None):
     session = get_test_session_by_student_and_test(student_id, test_id)
     if session:
         return jsonify(session)
@@ -150,7 +187,8 @@ def get_test_session_by_student_and_test_route(student_id, test_id):
 
 
 @app.route("/get-attendance", methods=["POST"])
-def get_attendance_route():
+@require_self_or_role('student_id', 'admin')
+def get_attendance_route(current_user=None):
     """
     Получает посещаемость студента за определенный месяц
     Ожидает JSON: {"student_id": "123", "year_month": "2025-01"}
@@ -179,7 +217,8 @@ def get_all_exams_route():
     return jsonify(result)
 
 @app.route("/get-exam-session", methods=["POST"])
-def get_exam_session_route():
+@require_self_or_role('student_id', 'admin')
+def get_exam_session_route(current_user=None):
     """Получает сессию экзамена для студента"""
     try:
         data = request.get_json()
@@ -199,19 +238,22 @@ def get_exam_session_route():
         return jsonify({"status": False, "error": str(e)}), 500
 
 @app.route("/get-student-exam-sessions/<student_id>")
-def get_student_exam_sessions_route(student_id):
+@require_self_or_role('student_id', 'admin')
+def get_student_exam_sessions_route(student_id, current_user=None):
     """Получает все сессии экзаменов для студента"""
     result = get_exam_sessions_by_student(student_id)
     return jsonify(result)
 
 @app.route("/get-all-exam-sessions")
-def get_all_exam_sessions_route():
+@require_role('admin')
+def get_all_exam_sessions_route(current_user=None):
     """Получает все сессии экзаменов (для администраторов)"""
     result = get_all_exam_sessions()
     return jsonify(result)
 
 @app.route("/get-exam-sessions/<exam_id>")
-def get_exam_sessions_by_exam_route(exam_id):
+@require_role('admin')
+def get_exam_sessions_by_exam_route(exam_id, current_user=None):
     """Получает все сессии для конкретного экзамена"""
     result = get_exam_sessions_by_exam(exam_id)
     return jsonify(result)
