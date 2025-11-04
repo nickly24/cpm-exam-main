@@ -2,13 +2,17 @@ from db import db
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from jwt_auth import require_auth, require_role, require_self_or_role
+from datetime import datetime
 from get_directions import get_directions
 from get_tests_by_direction import get_tests_by_direction
 from create_test import create_test, update_test, delete_test, get_test_by_id
 from create_test_session import create_test_session, get_test_session_by_id, get_test_sessions_by_student, get_test_sessions_by_test, get_test_session_stats, get_test_session_by_student_and_test, recalc_test_sessions
 from get_student_attendance import get_student_attendance
 from get_exams import get_all_exams, get_exam_session, get_exam_sessions_by_student, get_all_exam_sessions, get_exam_sessions_by_exam
-from get_external_tests import get_external_tests_with_results_by_student, get_all_external_tests_by_direction_for_admin 
+from get_external_tests import get_external_tests_with_results_by_student, get_all_external_tests_by_direction_for_admin
+from save_ratings import save_all_ratings
+import mysql.connector
+from pymongo import MongoClient 
 
 
 
@@ -324,6 +328,263 @@ def get_external_tests_for_student_route(student_id, direction_id, current_user=
     """
     external_tests = get_external_tests_with_results_by_student(direction_id, student_id)
     return jsonify(external_tests)
+
+
+# ==================== RATINGS ROUTES ====================
+
+@app.route("/get-all-ratings", methods=['GET'])
+@require_role('admin', 'supervisor')
+def get_all_ratings_route(current_user=None):
+    """
+    Получает все рейтинги из таблицы Allratings
+    Для администраторов и супервайзеров
+    
+    Возвращает:
+    {
+        "status": true/false,
+        "ratings": [
+            {
+                "id": 1,
+                "student_id": 123,
+                "exams": 4.5,
+                "homework": 85.2,
+                "tests": 78.3,
+                "final": 92.5
+            },
+            ...
+        ]
+    }
+    """
+    try:
+        mysql_conn = mysql.connector.connect(
+            host=db.host,
+            port=db.port,
+            user=db.user,
+            password=db.password,
+            database=db.db
+        )
+        
+        cursor = mysql_conn.cursor(dictionary=True)
+        
+        # Получаем все рейтинги с информацией о студентах
+        query = """
+            SELECT 
+                ar.id,
+                ar.student_id,
+                ar.exams,
+                ar.homework,
+                ar.tests,
+                ar.final,
+                s.full_name as student_name,
+                s.class as student_class,
+                g.name as group_name
+            FROM Allratings ar
+            LEFT JOIN students s ON ar.student_id = s.id
+            LEFT JOIN `groups` g ON s.group_id = g.id
+            ORDER BY ar.final DESC, s.full_name ASC
+        """
+        
+        cursor.execute(query)
+        ratings = cursor.fetchall()
+        cursor.close()
+        mysql_conn.close()
+        
+        # Форматируем результаты
+        formatted_ratings = []
+        for rating in ratings:
+            formatted_ratings.append({
+                'id': rating['id'],
+                'student_id': rating['student_id'],
+                'student_name': rating.get('student_name', 'Неизвестно'),
+                'student_class': rating.get('student_class'),
+                'group_name': rating.get('group_name'),
+                'exams': float(rating['exams']) if rating['exams'] is not None else 0,
+                'homework': float(rating['homework']) if rating['homework'] is not None else 0,
+                'tests': float(rating['tests']) if rating['tests'] is not None else 0,
+                'final': float(rating['final']) if rating['final'] is not None else 0
+            })
+        
+        return jsonify({
+            "status": True,
+            "ratings": formatted_ratings,
+            "total": len(formatted_ratings)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": False,
+            "error": f"Внутренняя ошибка сервера: {str(e)}"
+        }), 500
+
+
+@app.route("/get-rating-details", methods=['POST'])
+@require_role('admin', 'supervisor')
+def get_rating_details_route(current_user=None):
+    """
+    Получает детализацию рейтинга по ID записи из MongoDB
+    Для администраторов и супервайзеров
+    
+    Ожидаемые данные в JSON:
+    {
+        "rating_id": 123  // ID записи из таблицы Allratings
+    }
+    
+    Возвращает:
+    {
+        "status": true/false,
+        "details": {
+            "rating_id": 123,
+            "student_id": 456,
+            "date_from": "2024-01-01",
+            "date_to": "2024-12-31",
+            "calculated_at": "...",
+            "homework": {...},
+            "exams": {...},
+            "tests": {...},
+            "final_rating": 92.5
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                "status": False,
+                "error": "Данные не предоставлены"
+            }), 400
+        
+        rating_id = data.get('rating_id')
+        
+        if not rating_id:
+            return jsonify({
+                "status": False,
+                "error": "rating_id обязателен"
+            }), 400
+        
+        # Приводим к int
+        try:
+            rating_id = int(rating_id)
+        except (ValueError, TypeError):
+            return jsonify({
+                "status": False,
+                "error": "rating_id должен быть числом"
+            }), 400
+        
+        # Подключаемся к MongoDB
+        mongo_client = MongoClient('mongodb://gen_user:77tanufe@109.73.202.73:27017/default_db?authSource=admin&directConnection=true')
+        db_mongo = mongo_client.default_db
+        rate_rec_collection = db_mongo.rate_rec
+        
+        # Ищем детализацию по rating_id
+        details = rate_rec_collection.find_one({'rating_id': rating_id})
+        mongo_client.close()
+        
+        if not details:
+            return jsonify({
+                "status": False,
+                "error": f"Детализация для rating_id {rating_id} не найдена"
+            }), 404
+        
+        # Преобразуем ObjectId в строку
+        if '_id' in details:
+            details['_id'] = str(details['_id'])
+        
+        return jsonify({
+            "status": True,
+            "details": details
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": False,
+            "error": f"Внутренняя ошибка сервера: {str(e)}"
+        }), 500
+
+
+@app.route("/calculate-all-ratings", methods=['POST'])
+@require_role('admin')
+def calculate_all_ratings_route(current_user=None):
+    """
+    Рассчитывает и сохраняет рейтинги для всех студентов
+    Только для администраторов
+    
+    Ожидаемые данные в JSON:
+    {
+        "date_from": "2024-01-01",
+        "date_to": "2024-12-31"
+    }
+    
+    Возвращает:
+    {
+        "status": true/false,
+        "message": "...",
+        "results": {
+            "total_students": 100,
+            "successful": 95,
+            "failed": 5,
+            "errors": [...]
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                "status": False,
+                "error": "Данные не предоставлены"
+            }), 400
+        
+        date_from = data.get('date_from')
+        date_to = data.get('date_to')
+        
+        if not date_from or not date_to:
+            return jsonify({
+                "status": False,
+                "error": "date_from и date_to обязательны"
+            }), 400
+        
+        # Валидация формата дат
+        try:
+            datetime.strptime(date_from, "%Y-%m-%d")
+            datetime.strptime(date_to, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({
+                "status": False,
+                "error": "Неверный формат даты. Ожидается YYYY-MM-DD"
+            }), 400
+        
+        # Подключаемся к базам данных
+        mysql_conn = mysql.connector.connect(
+            host=db.host,
+            port=db.port,
+            user=db.user,
+            password=db.password,
+            database=db.db
+        )
+        
+        mongo_client = MongoClient('mongodb://gen_user:77tanufe@109.73.202.73:27017/default_db?authSource=admin&directConnection=true')
+        
+        try:
+            # Рассчитываем и сохраняем рейтинги
+            results = save_all_ratings(mysql_conn, mongo_client, date_from, date_to)
+            
+            return jsonify({
+                "status": True,
+                "message": f"Обработано студентов: {results['successful']}/{results['total_students']}",
+                "results": results
+            })
+            
+        finally:
+            mysql_conn.close()
+            mongo_client.close()
+            
+    except Exception as e:
+        return jsonify({
+            "status": False,
+            "error": f"Внутренняя ошибка сервера: {str(e)}"
+        }), 500
 
 
 if __name__ =="__main__":
