@@ -277,10 +277,10 @@ def calculate_tests_rating(mysql_conn, mongo_client, student_id, date_from, date
 def calculate_final_rating(hw_rating, exams_rating, tests_rating):
     """
     Рассчитывает общий рейтинг по формуле:
-    (ДЗ × 25)/100 + (Экзамены × 30) + (Тесты × 45)/100
+    (ДЗ × 25)/100 + (Экзамены × 6) + (Тесты × 45)/100
     """
     hw_component = (hw_rating['average'] * 25) / 100
-    exams_component = exams_rating['average'] * 30
+    exams_component = exams_rating['average'] * 6
     tests_component = (tests_rating['average'] * 45) / 100
     
     final_rating = hw_component + exams_component + tests_component
@@ -320,4 +320,5 @@ def calculate_student_rating(mysql_conn, mongo_client, student_id, date_from, da
         },
         'final_rating': final_rating
     }
+
 

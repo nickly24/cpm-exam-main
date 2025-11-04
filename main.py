@@ -568,11 +568,19 @@ def calculate_all_ratings_route(current_user=None):
         
         try:
             # Рассчитываем и сохраняем рейтинги
+            # (внутри функции уже происходит очистка таблиц)
             results = save_all_ratings(mysql_conn, mongo_client, date_from, date_to)
+            
+            # Формируем сообщение
+            message_parts = [f"Обработано студентов: {results['successful']}/{results['total_students']}"]
+            if results.get('skipped', 0) > 0:
+                message_parts.append(f"Пропущено: {results['skipped']}")
+            if results.get('failed', 0) > 0:
+                message_parts.append(f"Ошибок: {results['failed']}")
             
             return jsonify({
                 "status": True,
-                "message": f"Обработано студентов: {results['successful']}/{results['total_students']}",
+                "message": " | ".join(message_parts),
                 "results": results
             })
             

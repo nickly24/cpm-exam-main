@@ -159,9 +159,72 @@ def save_rating_details_to_mongo(mongo_client, rating_id, rating_data):
         }
 
 
+def clear_all_ratings(mysql_conn, mongo_client):
+    """
+    Очищает все рейтинги из MySQL и MongoDB
+    
+    Args:
+        mysql_conn: соединение с MySQL
+        mongo_client: клиент MongoDB
+    
+    Returns:
+        dict: результат очистки
+    """
+    mysql_success = False
+    mongo_success = False
+    mysql_error = None
+    mongo_error = None
+    
+    # Очищаем MySQL
+    try:
+        cursor = mysql_conn.cursor()
+        cursor.execute("DELETE FROM Allratings")
+        mysql_conn.commit()
+        cursor.close()
+        mysql_success = True
+    except Exception as e:
+        mysql_conn.rollback()
+        mysql_error = str(e)
+    
+    # Очищаем MongoDB
+    try:
+        db = mongo_client.default_db
+        rate_rec_collection = db.rate_rec
+        rate_rec_collection.delete_many({})
+        mongo_success = True
+    except Exception as e:
+        mongo_error = str(e)
+    
+    return {
+        'mysql_success': mysql_success,
+        'mongo_success': mongo_success,
+        'mysql_error': mysql_error,
+        'mongo_error': mongo_error
+    }
+
+
+def check_student_exists(mysql_conn, student_id):
+    """
+    Проверяет существование студента в базе данных
+    
+    Args:
+        mysql_conn: соединение с MySQL
+        student_id: ID студента
+    
+    Returns:
+        bool: True если студент существует, False иначе
+    """
+    cursor = mysql_conn.cursor(dictionary=True)
+    cursor.execute("SELECT id FROM students WHERE id = %s", (student_id,))
+    result = cursor.fetchone()
+    cursor.close()
+    return result is not None
+
+
 def save_all_ratings(mysql_conn, mongo_client, date_from, date_to):
     """
-    Рассчитывает и сохраняет рейтинги для всех студентов
+    Рассчитывает и сохраняет рейтинги для всех актуальных студентов
+    Перед расчетом очищает все существующие рейтинги
     
     Args:
         mysql_conn: соединение с MySQL
@@ -174,8 +237,30 @@ def save_all_ratings(mysql_conn, mongo_client, date_from, date_to):
     """
     from calculate_ratings import calculate_student_rating
     
+    # Очищаем все существующие рейтинги
+    clear_result = clear_all_ratings(mysql_conn, mongo_client)
+    
+    if not clear_result['mysql_success']:
+        return {
+            'total_students': 0,
+            'successful': 0,
+            'failed': 0,
+            'errors': [f"Ошибка очистки MySQL: {clear_result['mysql_error']}"],
+            'clear_error': True
+        }
+    
+    if not clear_result['mongo_success']:
+        return {
+            'total_students': 0,
+            'successful': 0,
+            'failed': 0,
+            'errors': [f"Ошибка очистки MongoDB: {clear_result['mongo_error']}"],
+            'clear_error': True
+        }
+    
+    # Получаем список актуальных студентов
     cursor = mysql_conn.cursor(dictionary=True)
-    cursor.execute("SELECT id FROM students")
+    cursor.execute("SELECT id FROM students ORDER BY id")
     students = cursor.fetchall()
     cursor.close()
     
@@ -183,11 +268,22 @@ def save_all_ratings(mysql_conn, mongo_client, date_from, date_to):
         'total_students': len(students),
         'successful': 0,
         'failed': 0,
-        'errors': []
+        'errors': [],
+        'skipped': 0
     }
     
     for student in students:
         student_id = student['id']
+        
+        # Проверяем существование студента перед расчетом
+        if not check_student_exists(mysql_conn, student_id):
+            results['skipped'] += 1
+            results['errors'].append({
+                'student_id': student_id,
+                'error': 'Студент не найден в базе данных'
+            })
+            continue
+        
         try:
             # Рассчитываем рейтинг
             rating_data = calculate_student_rating(
