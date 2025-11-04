@@ -7,7 +7,8 @@ from get_tests_by_direction import get_tests_by_direction
 from create_test import create_test, update_test, delete_test, get_test_by_id
 from create_test_session import create_test_session, get_test_session_by_id, get_test_sessions_by_student, get_test_sessions_by_test, get_test_session_stats, get_test_session_by_student_and_test, recalc_test_sessions
 from get_student_attendance import get_student_attendance
-from get_exams import get_all_exams, get_exam_session, get_exam_sessions_by_student, get_all_exam_sessions, get_exam_sessions_by_exam 
+from get_exams import get_all_exams, get_exam_session, get_exam_sessions_by_student, get_all_exam_sessions, get_exam_sessions_by_exam
+from get_external_tests import get_external_tests_with_results_by_student, get_all_external_tests_by_direction_for_admin 
 
 
 
@@ -34,9 +35,44 @@ def get_directions_route():
     return jsonify(directions)
 
 @app.route("/tests/<direction>")
-def get_tests_by_direction_route(direction):
+@require_auth
+def get_tests_by_direction_route(direction, current_user=None):
+    """
+    Получает все тесты по направлению (включая внешние тесты)
+    direction - название направления
+    """
+    # Получаем обычные тесты из MongoDB
     tests = get_tests_by_direction(direction)
-    return jsonify(tests)
+    
+    # Получаем ID направления по названию
+    directions = get_directions()
+    direction_obj = next((d for d in directions if d['name'] == direction), None)
+    
+    if direction_obj:
+        direction_id = direction_obj['id']
+        student_id = current_user.get('id') if current_user else None
+        
+        try:
+            # Получаем внешние тесты
+            if student_id and current_user.get('role') == 'student':
+                # Для студентов получаем тесты с результатами
+                # Убеждаемся, что student_id - int
+                student_id = int(student_id) if student_id else None
+                external_tests = get_external_tests_with_results_by_student(direction_id, student_id)
+            else:
+                # Для админов и других ролей получаем все внешние тесты
+                external_tests = get_all_external_tests_by_direction_for_admin(direction_id)
+            
+            # Объединяем обычные и внешние тесты
+            all_tests = tests + external_tests
+        except Exception as e:
+            # Если ошибка при получении внешних тестов, возвращаем только обычные
+            print(f"Ошибка при получении внешних тестов: {str(e)}")
+            all_tests = tests
+    else:
+        all_tests = tests
+    
+    return jsonify(all_tests)
 
 @app.route("/test/<test_id>")
 @require_auth
@@ -257,6 +293,37 @@ def get_exam_sessions_by_exam_route(exam_id, current_user=None):
     """Получает все сессии для конкретного экзамена"""
     result = get_exam_sessions_by_exam(exam_id)
     return jsonify(result)
+
+
+# ==================== EXTERNAL TESTS ROUTES ====================
+
+@app.route("/external-tests/direction/<direction_id>")
+@require_auth
+def get_external_tests_by_direction_route(direction_id, current_user=None):
+    """
+    Получает внешние тесты по ID направления
+    Для студентов возвращает тесты с их результатами
+    Для админов возвращает все тесты
+    """
+    student_id = current_user.get('id') if current_user else None
+    
+    if student_id and current_user.get('role') == 'student':
+        # Для студентов получаем тесты с результатами
+        external_tests = get_external_tests_with_results_by_student(direction_id, student_id)
+    else:
+        # Для админов и других ролей получаем все внешние тесты
+        external_tests = get_all_external_tests_by_direction_for_admin(direction_id)
+    
+    return jsonify(external_tests)
+
+@app.route("/external-tests/student/<student_id>/direction/<direction_id>")
+@require_self_or_role('student_id', 'admin')
+def get_external_tests_for_student_route(student_id, direction_id, current_user=None):
+    """
+    Получает внешние тесты направления с результатами конкретного студента
+    """
+    external_tests = get_external_tests_with_results_by_student(direction_id, student_id)
+    return jsonify(external_tests)
 
 
 if __name__ =="__main__":
