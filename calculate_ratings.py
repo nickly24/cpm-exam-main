@@ -85,7 +85,8 @@ def calculate_exams_rating(mysql_conn, student_id, date_from, date_to):
     Возвращает детализацию для сохранения
     """
     cursor = mysql_conn.cursor(dictionary=True)
-    
+
+    # Берем все экзамены периода, результаты студента подмешиваем (отсутствие = не сдавал = 0)
     query = """
         SELECT 
             es.id,
@@ -93,12 +94,11 @@ def calculate_exams_rating(mysql_conn, student_id, date_from, date_to):
             e.id as exam_id,
             e.name as exam_name,
             e.date as exam_date
-        FROM exam_sessions es
-        INNER JOIN exams e ON es.exam_id = e.id
-        WHERE es.student_id = %s
-          AND e.date >= %s
+        FROM exams e
+        LEFT JOIN exam_sessions es
+          ON es.exam_id = e.id AND es.student_id = %s
+        WHERE e.date >= %s
           AND e.date <= %s
-          AND es.points IS NOT NULL
         ORDER BY e.date DESC
     """
     
@@ -112,12 +112,14 @@ def calculate_exams_rating(mysql_conn, student_id, date_from, date_to):
     for exam in exams:
         score = float(exam['score']) if exam['score'] is not None else 0
         total_score += score
+        status = 'Сдан' if exam['score'] is not None else 'Не сдавал'
         
         details.append({
             'exam_id': exam['exam_id'],
             'exam_name': exam['exam_name'],
             'exam_date': str(exam['exam_date']) if exam['exam_date'] else None,
-            'score': score
+            'score': score,
+            'status': status
         })
     
     average_score = total_score / len(exams) if len(exams) > 0 else 0
