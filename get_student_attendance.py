@@ -1,5 +1,4 @@
-import mysql.connector
-from db import db
+from db_pool import get_db_connection, close_db_connection
 import datetime
 
 def get_student_attendance(student_id, year_month):
@@ -13,16 +12,10 @@ def get_student_attendance(student_id, year_month):
     Returns:
         dict: Результат с посещаемостью студента
     """
-    connection = mysql.connector.connect(
-        host=db.host,
-        port=db.port,
-        user=db.user,
-        password=db.password,
-        db=db.db
-    )
-    cursor = connection.cursor(dictionary=True)
-
+    connection = None
     try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
         # Парсим год и месяц
         try:
             year, month = year_month.split('-')
@@ -75,9 +68,10 @@ def get_student_attendance(student_id, year_month):
             }
         }
 
-    except mysql.connector.Error as err:
+    except Exception as err:
         print(f"Ошибка базы данных: {err}")
         return {"status": False, "error": str(err)}
 
     finally:
-        connection.close()
+        if connection:
+            close_db_connection(connection)

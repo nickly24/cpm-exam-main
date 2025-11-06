@@ -1,26 +1,16 @@
-import mysql.connector
-from db import db
+from db_pool import get_db_connection, close_db_connection
 
 def get_all_exams():
     """
     Получает все экзамены из базы данных
     """
+    connection = None
     try:
-        connection = mysql.connector.connect(
-            host=db.host,
-            port=db.port,
-            user=db.user,
-            password=db.password,
-            database=db.db
-        )
-        
+        connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
         query = "SELECT id, name, date FROM exams ORDER BY date DESC"
         cursor.execute(query)
         exams = cursor.fetchall()
-        
-        cursor.close()
-        connection.close()
         
         return {
             "status": True,
@@ -32,21 +22,18 @@ def get_all_exams():
             "status": False,
             "error": str(e)
         }
+    finally:
+        if connection:
+            close_db_connection(connection)
 
 
 def get_exam_session(student_id, exam_id):
     """
     Получает сессию экзамена для студента
     """
+    connection = None
     try:
-        connection = mysql.connector.connect(
-            host=db.host,
-            port=db.port,
-            user=db.user,
-            password=db.password,
-            database=db.db
-        )
-        
+        connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
         
         # Получаем информацию об экзамене
@@ -54,8 +41,6 @@ def get_exam_session(student_id, exam_id):
         exam = cursor.fetchone()
         
         if not exam:
-            cursor.close()
-            connection.close()
             return {
                 "status": False,
                 "error": "Экзамен не найден"
@@ -69,9 +54,6 @@ def get_exam_session(student_id, exam_id):
         """, (exam_id, student_id))
         
         session = cursor.fetchone()
-        
-        cursor.close()
-        connection.close()
         
         if not session:
             return {
@@ -92,21 +74,18 @@ def get_exam_session(student_id, exam_id):
             "status": False,
             "error": str(e)
         }
+    finally:
+        if connection:
+            close_db_connection(connection)
 
 
 def get_exam_sessions_by_student(student_id):
     """
     Получает все сессии экзаменов для студента
     """
+    connection = None
     try:
-        connection = mysql.connector.connect(
-            host=db.host,
-            port=db.port,
-            user=db.user,
-            password=db.password,
-            database=db.db
-        )
-        
+        connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
         
         query = """
@@ -140,9 +119,6 @@ def get_exam_sessions_by_student(student_id):
                 "exam_date": s["exam_date"]
             })
         
-        cursor.close()
-        connection.close()
-        
         return {
             "status": True,
             "sessions": sessions
@@ -153,21 +129,18 @@ def get_exam_sessions_by_student(student_id):
             "status": False,
             "error": str(e)
         }
+    finally:
+        if connection:
+            close_db_connection(connection)
 
 
 def get_all_exam_sessions():
     """
     Получает все сессии экзаменов (для администраторов)
     """
+    connection = None
     try:
-        connection = mysql.connector.connect(
-            host=db.host,
-            port=db.port,
-            user=db.user,
-            password=db.password,
-            database=db.db
-        )
-        
+        connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
         
         query = """
@@ -205,9 +178,6 @@ def get_all_exam_sessions():
                 "student_name": s["student_name"]
             })
         
-        cursor.close()
-        connection.close()
-        
         return {
             "status": True,
             "sessions": sessions
@@ -218,21 +188,18 @@ def get_all_exam_sessions():
             "status": False,
             "error": str(e)
         }
+    finally:
+        if connection:
+            close_db_connection(connection)
 
 
 def get_exam_sessions_by_exam(exam_id):
     """
     Получает все сессии для конкретного экзамена (для администраторов)
     """
+    connection = None
     try:
-        connection = mysql.connector.connect(
-            host=db.host,
-            port=db.port,
-            user=db.user,
-            password=db.password,
-            database=db.db
-        )
-        
+        connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
         
         query = """
@@ -271,9 +238,6 @@ def get_exam_sessions_by_exam(exam_id):
                 "student_name": s["student_name"]
             })
         
-        cursor.close()
-        connection.close()
-        
         return {
             "status": True,
             "sessions": sessions
@@ -284,4 +248,7 @@ def get_exam_sessions_by_exam(exam_id):
             "status": False,
             "error": str(e)
         }
+    finally:
+        if connection:
+            close_db_connection(connection)
 
