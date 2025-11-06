@@ -10,6 +10,10 @@ def create_test(test_data):
     
     test_data["createdAt"] = datetime.utcnow().isoformat() + "Z"
     
+    # Устанавливаем visible по умолчанию в False, если не указано
+    if "visible" not in test_data:
+        test_data["visible"] = False
+    
     result = tests_collection.insert_one(test_data)
     
     return str(result.inserted_id)
@@ -90,3 +94,61 @@ def get_test_by_id(test_id):
     except Exception:
         # Если ObjectId невалидный, возвращаем None
         return None
+
+def toggle_test_visibility(test_id):
+    """
+    Переключает видимость теста (visible: true/false)
+    
+    Args:
+        test_id (str): ID теста
+    
+    Returns:
+        dict: Результат переключения с новым значением visible
+    """
+    db = client.default_db
+    tests_collection = db.tests
+    
+    try:
+        # Получаем текущий тест
+        test = tests_collection.find_one({"_id": ObjectId(test_id)})
+        
+        if not test:
+            return {
+                "success": False,
+                "error": "Test not found"
+            }
+        
+        # Получаем текущее значение visible (по умолчанию False)
+        current_visible = test.get("visible", False)
+        
+        # Переключаем значение
+        new_visible = not current_visible
+        
+        # Обновляем тест
+        result = tests_collection.update_one(
+            {"_id": ObjectId(test_id)},
+            {
+                "$set": {
+                    "visible": new_visible,
+                    "updatedAt": datetime.utcnow().isoformat() + "Z"
+                }
+            }
+        )
+        
+        if result.modified_count > 0:
+            return {
+                "success": True,
+                "visible": new_visible,
+                "message": f"Видимость теста {'включена' if new_visible else 'выключена'}"
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Failed to update test visibility"
+            }
+            
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }

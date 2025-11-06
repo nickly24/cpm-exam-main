@@ -9,7 +9,7 @@ def get_tests_by_direction(direction_name):
     
     tests = tests_collection.find(
         {"direction": direction_name},
-        {"_id": 1, "title": 1, "startDate": 1, "endDate": 1, "timeLimitMinutes": 1}
+        {"_id": 1, "title": 1, "startDate": 1, "endDate": 1, "timeLimitMinutes": 1, "visible": 1}
     )
     
     result = []
@@ -19,7 +19,8 @@ def get_tests_by_direction(direction_name):
             "title": test["title"],
             "startDate": test["startDate"],
             "endDate": test["endDate"],
-            "timeLimitMinutes": test["timeLimitMinutes"]
+            "timeLimitMinutes": test["timeLimitMinutes"],
+            "visible": test.get("visible", False)
         })
     
     return result

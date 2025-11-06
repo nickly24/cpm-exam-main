@@ -5,7 +5,7 @@ from jwt_auth import require_auth, require_role, require_self_or_role
 from datetime import datetime
 from get_directions import get_directions
 from get_tests_by_direction import get_tests_by_direction
-from create_test import create_test, update_test, delete_test, get_test_by_id
+from create_test import create_test, update_test, delete_test, get_test_by_id, toggle_test_visibility
 from create_test_session import create_test_session, get_test_session_by_id, get_test_sessions_by_student, get_test_sessions_by_test, get_test_session_stats, get_test_session_by_student_and_test, recalc_test_sessions
 from get_student_attendance import get_student_attendance
 from get_exams import get_all_exams, get_exam_session, get_exam_sessions_by_student, get_all_exam_sessions, get_exam_sessions_by_exam
@@ -183,6 +183,30 @@ def delete_test_route(test_id, current_user=None):
         "deletedSessions": result["sessions_deleted"],
         "totalDeleted": result["total_deleted"]
     })
+
+@app.route("/test/<test_id>/toggle-visibility", methods=["PUT"])
+@require_role('admin')
+def toggle_test_visibility_route(test_id, current_user=None):
+    """
+    Переключает видимость теста (доступность ответов для студентов)
+    Только для обычных тестов (не внешних)
+    """
+    # Проверяем, существует ли тест
+    existing_test = get_test_by_id(test_id)
+    if not existing_test:
+        return jsonify({"error": "Test not found"}), 404
+    
+    # Переключаем видимость
+    result = toggle_test_visibility(test_id)
+    
+    if result["success"]:
+        return jsonify({
+            "message": result["message"],
+            "visible": result["visible"],
+            "testId": test_id
+        })
+    else:
+        return jsonify({"error": result["error"]}), 500
 
 @app.route("/create-test-session", methods=["POST"])
 @require_self_or_role('studentId', 'admin')
