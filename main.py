@@ -11,7 +11,7 @@ from get_student_attendance import get_student_attendance
 from get_exams import get_all_exams, get_exam_session, get_exam_sessions_by_student, get_all_exam_sessions, get_exam_sessions_by_exam
 from get_external_tests import get_external_tests_with_results_by_student, get_all_external_tests_by_direction_for_admin
 from save_ratings import save_all_ratings
-import mysql.connector
+from db_pool import get_db_connection, close_db_connection
 from pymongo import MongoClient 
 
 
@@ -355,15 +355,9 @@ def get_all_ratings_route(current_user=None):
         ]
     }
     """
+    mysql_conn = None
     try:
-        mysql_conn = mysql.connector.connect(
-            host=db.host,
-            port=db.port,
-            user=db.user,
-            password=db.password,
-            database=db.db
-        )
-        
+        mysql_conn = get_db_connection()
         cursor = mysql_conn.cursor(dictionary=True)
         
         # Получаем все рейтинги с информацией о студентах
@@ -386,8 +380,6 @@ def get_all_ratings_route(current_user=None):
         
         cursor.execute(query)
         ratings = cursor.fetchall()
-        cursor.close()
-        mysql_conn.close()
         
         # Форматируем результаты
         formatted_ratings = []
@@ -415,6 +407,9 @@ def get_all_ratings_route(current_user=None):
             "status": False,
             "error": f"Внутренняя ошибка сервера: {str(e)}"
         }), 500
+    finally:
+        if mysql_conn:
+            close_db_connection(mysql_conn)
 
 
 @app.route("/get-rating-details", methods=['POST'])
@@ -555,15 +550,8 @@ def calculate_all_ratings_route(current_user=None):
                 "error": "Неверный формат даты. Ожидается YYYY-MM-DD"
             }), 400
         
-        # Подключаемся к базам данных
-        mysql_conn = mysql.connector.connect(
-            host=db.host,
-            port=db.port,
-            user=db.user,
-            password=db.password,
-            database=db.db
-        )
-        
+        # Получаем подключение из пула
+        mysql_conn = get_db_connection()
         mongo_client = MongoClient('mongodb://gen_user:77tanufe@109.73.202.73:27017/default_db?authSource=admin&directConnection=true')
         
         try:
@@ -585,8 +573,10 @@ def calculate_all_ratings_route(current_user=None):
             })
             
         finally:
-            mysql_conn.close()
-            mongo_client.close()
+            if mysql_conn:
+                close_db_connection(mysql_conn)
+            if mongo_client:
+                mongo_client.close()
             
     except Exception as e:
         return jsonify({
