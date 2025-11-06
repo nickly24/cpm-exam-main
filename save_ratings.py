@@ -8,7 +8,7 @@ from datetime import datetime
 from db import db
 
 # Настройки подключения к MongoDB
-MONGODB_URI = 'mongodb://gen_user:77tanufe@109.73.202.73:27017/default_db?authSource=admin&directConnection=true'
+MONGODB_URI = 'mongodb://gen_user:I_OBNu~9oHF0(m@81.200.148.71:27017/default_db?authSource=admin&directConnection=true'
 
 
 def save_rating_to_mysql(mysql_conn, rating_data):

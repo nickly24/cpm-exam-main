@@ -10,7 +10,7 @@ from bson import ObjectId
 from datetime import datetime
 
 # Подключение к MongoDB
-client = MongoClient('mongodb://gen_user:77tanufe@109.73.202.73:27017/default_db?authSource=admin&directConnection=true')
+client = MongoClient('mongodb://gen_user:I_OBNu~9oHF0(m@81.200.148.71:27017/default_db?authSource=admin&directConnection=true')
 db = client.default_db
 
 def normalize_text(value: str) -> str:

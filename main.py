@@ -467,7 +467,7 @@ def get_rating_details_route(current_user=None):
             }), 400
         
         # Подключаемся к MongoDB
-        mongo_client = MongoClient('mongodb://gen_user:77tanufe@109.73.202.73:27017/default_db?authSource=admin&directConnection=true')
+        mongo_client = MongoClient('mongodb://gen_user:I_OBNu~9oHF0(m@81.200.148.71:27017/default_db?authSource=admin&directConnection=true')
         db_mongo = mongo_client.default_db
         rate_rec_collection = db_mongo.rate_rec
         
@@ -552,7 +552,7 @@ def calculate_all_ratings_route(current_user=None):
         
         # Получаем подключение из пула
         mysql_conn = get_db_connection()
-        mongo_client = MongoClient('mongodb://gen_user:77tanufe@109.73.202.73:27017/default_db?authSource=admin&directConnection=true')
+        mongo_client = MongoClient('mongodb://gen_user:I_OBNu~9oHF0(m@81.200.148.71:27017/default_db?authSource=admin&directConnection=true')
         
         try:
             # Рассчитываем и сохраняем рейтинги
